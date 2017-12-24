@@ -29,11 +29,11 @@ public class TwitterClient {
 	private final String token;
 	private final String tokenSecret;
 	private final Client twitterClient;
-	
+
 	private BlockingQueue<String> msgQueue;
 	private BlockingQueue<Event> eventQueue;
 
-	private TwitterClient() {
+	private TwitterClient(String[] filterTags) {
 		consumerKey = System.getenv(ENV_KEY_CONSUMERKEY);
 		secretKey = System.getenv(ENV_KEY_CONSUMERSECRET);
 		token = System.getenv(ENV_KEY_TOKEN);
@@ -53,7 +53,7 @@ public class TwitterClient {
 		 */
 		Hosts hosebirdHosts = new HttpHosts(Constants.STREAM_HOST);
 		StatusesFilterEndpoint hosebirdEndpoint = new StatusesFilterEndpoint();
-		List<String> terms = Lists.newArrayList("#iphone");
+		List<String> terms = Lists.newArrayList(filterTags);
 		hosebirdEndpoint.trackTerms(terms);
 		hosebirdEndpoint.languages(Lists.newArrayList("en"));
 
@@ -66,27 +66,27 @@ public class TwitterClient {
 		twitterClient.connect();
 	}
 
-	public static TwitterClient getInstance() {
+	public static TwitterClient getInstance(String[] filterTags) {
 		if (client == null) {
-			client = new TwitterClient();
+			client = new TwitterClient(filterTags);
 		}
 		return client;
 	}
-	
-	public Tweet getTweet() throws InterruptedException{
+
+	public Tweet getTweet() throws InterruptedException {
 		return Tweet.fromJSONString(msgQueue.take());
 	}
-	
-	public Tweet getTweet(long timeout, TimeUnit unit){
-		try{
+
+	public Tweet getTweet(long timeout, TimeUnit unit) {
+		try {
 			return Tweet.fromJSONString(msgQueue.poll(timeout, unit));
-		}catch(InterruptedException e){
+		} catch (InterruptedException e) {
 			System.out.println("Interrupted while polling for entries in the queue");
 		}
 		return null;
 	}
-	
-	public void close(){
+
+	public void close() {
 		twitterClient.stop();
 	}
 }
